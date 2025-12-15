@@ -81,4 +81,56 @@ class FileSeparatorUtilTest {
         assertEquals(inputFile.absolutePath, result.orignalFilePath)
     }
 
+
+        @Test
+        fun `GIVEN existing cache WHEN chunk size changes THEN recreate cache`() {
+            // GIVEN
+            val itemId = "item3"
+
+            FileSeparatorUtil.splitFileToChach(
+                context,
+                inputFile,
+                itemId,
+                1
+            )
+
+            // WHEN
+            val result = FileSeparatorUtil.splitFileToChach(
+                context,
+                inputFile,
+                itemId,
+                2
+            )
+
+            // THEN
+            assertEquals(2, result.parts.size)
+        }
+
+        @Test
+        fun `GIVEN missing part file WHEN split THEN recreate cache`() {
+            // GIVEN
+            val itemId = "item4"
+            val chunkSizeMb = 1
+
+            val oldResult = FileSeparatorUtil.splitFileToChach(
+                context,
+                inputFile,
+                itemId,
+                chunkSizeMb
+            )
+
+            File(oldResult.parts[0]!!).delete()
+
+            // WHEN
+            val newResult = FileSeparatorUtil.splitFileToChach(
+                context,
+                inputFile,
+                itemId,
+                chunkSizeMb
+            )
+
+            // THEN
+            assertEquals(3, newResult.parts.size)
+        }
+
 }

@@ -55,5 +55,30 @@ class FileSeparatorUtilTest {
         assertEquals(3, result.parts.size)
     }
 
+     @Test
+    fun `GIVEN valid cached data WHEN split called again THEN return old info`() {
+        // GIVEN
+        val itemId = "item2"
+        val chunkSizeMb = 1
+
+        FileSeparatorUtil.splitFileToChach(
+            context,
+            inputFile,
+            itemId,
+            chunkSizeMb
+        )
+
+        // WHEN
+        val result = FileSeparatorUtil.splitFileToChach(
+            context,
+            inputFile,
+            itemId,
+            chunkSizeMb
+        )
+
+        // THEN
+        assertEquals(3, result.parts.size)
+        assertEquals(inputFile.absolutePath, result.orignalFilePath)
+    }
 
 }

@@ -10,6 +10,7 @@ import java.io.FileOutputStream
 object FileSeparatorUtil {
 
 
+
     fun splitFileToChach(
         context: Context,
         inputFile: File,
@@ -20,7 +21,7 @@ object FileSeparatorUtil {
         val itemCacheDir = File(context.cacheDir, itemId)
         val jsonFile = File(itemCacheDir, "info.json")
         val result: ItemFileInfo? =
-            itemFileInfo(jsonFile = jsonFile, itemCacheDir = itemCacheDir)
+            itemFileInfo(itemCacheDir, jsonFile, inputFile, chunkSize)
 
         if (result != null) {
             return result
@@ -34,7 +35,7 @@ object FileSeparatorUtil {
             while (inputStream.read(buffer).also { bytesRead = it } > 0) {
                 val chunkFile = File(
                     itemCacheDir,
-                    "${inputFile.name}.part${index + 1}"
+                    "${inputFile.name}.part${index+1}"
                 )
                 FileOutputStream(chunkFile).use { outputStream ->
                     outputStream.write(buffer, 0, bytesRead)
@@ -45,7 +46,7 @@ object FileSeparatorUtil {
         }
 
         val newItemInfo = ItemFileInfo(
-            itemName = itemId,
+            itemName =itemId,
             folderName = itemCacheDir.name,
             parts = partsMap,
             orignalFilePath = inputFile.absolutePath,
@@ -57,8 +58,10 @@ object FileSeparatorUtil {
     }
 
     private fun itemFileInfo(
+        itemCacheDir: File,
         jsonFile: File,
-        itemCacheDir: File
+        inputFile: File,
+        chunkSize: Int
     ): ItemFileInfo? {
         val result: ItemFileInfo? =
             if (!itemCacheDir.exists()) {
@@ -67,9 +70,12 @@ object FileSeparatorUtil {
             } else {
                 getOldInfo(
                     jsonFile = jsonFile,
+                    orignalFile = inputFile,
+                    chunkSize = chunkSize,
+                    itemCacheDir = itemCacheDir
                 )
             }
-        if (result == null || !itemCacheDir.exists()) {
+        if(result==null||!itemCacheDir.exists()){
             itemCacheDir.mkdirs()
         }
         return result
@@ -79,13 +85,26 @@ object FileSeparatorUtil {
         return (chunkSizeInMb * 1024 * 1024).toLong()
     }
 
-    private fun getOldInfo(jsonFile: File):
+    private fun getOldInfo(jsonFile: File, orignalFile: File, chunkSize: Int, itemCacheDir: File):
             ItemFileInfo? {
 
         if (jsonFile.exists()) {
             val gson = Gson()
             val itemInfo = gson.fromJson(jsonFile.readText(), ItemFileInfo::class.java)
-            return itemInfo
+            if (orignalFile.absolutePath != itemInfo.orignalFilePath || itemInfo.chankSizeInMb != chunkSize) {
+                itemCacheDir.deleteRecursively()
+                return null
+            }
+            val allExist = itemInfo.parts.values.all { path ->
+                val partFile = File(path)
+                partFile.exists() && partFile.length() == chunkSizeInByte(chunkSize)
+            }
+            if (allExist) {
+                return itemInfo
+            } else {
+                itemCacheDir.deleteRecursively()
+                return null
+            }
         } else {
             return null
         }

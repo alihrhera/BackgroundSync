@@ -50,7 +50,7 @@ The compression process is integrated into the app's background synchronization 
 
 The following video demonstrates the compression process and the resulting quality:
 
-<video src="res/vider-comppress.mp4" controls title="Video Compression Demo" style="max-width: 100%;">
+<video src="res/video_compression.mp4" controls title="Video Compression Demo" style="max-width: 100%;">
 </video>
 
 > [!NOTE]
